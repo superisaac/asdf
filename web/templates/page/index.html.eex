@@ -1,0 +1,13 @@
+<div class="jumbotron">
+  <h2><%= gettext "Welcome to %{name}", name: "Asdfchat!" %></h2>
+  <div class="">
+    <div class="col-md-3 col-md-offset-3">
+      <i class="fa fa-github"></i>
+      <a href="/auth/github">Github</a>
+    </div>
+   <div class="col-md-3">
+      <i class="fa fa-square-o"></i>
+      <a href="/auth/passwd">Password</a>
+    </div>
+  </div>
+</div>

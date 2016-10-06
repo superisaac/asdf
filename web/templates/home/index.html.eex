@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<% cu = current_user(@conn) %>
+<html lang="en" style="height: 100%;">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>@<%= cu.name %> - asdf</title>
+    <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
+    <script>
+      //<!--
+            window.apiToken = '<%= get_session_token(@conn) %>';
+            window.userToken = '<%= Phoenix.Token.sign(@conn, "asdf_user", cu.id) %>';
+            //-->
+    </script>
+  </head>
+  <body>
+    <div class="container-origin full-height">
+      <div class="full-height row" id="asdf-chat">
+        <div class="col-md-3 sidebar hidden-xs hidden-sm">
+          <div class="nav asdf-head">
+            <div class="nav-header">
+              <a class="navbar-brand asdf-brand">
+                <i class="fa fa-smile-o"></i>{{ currentUser.name }}</a>
+            </div>
+            
+            <ul class="nav navbar-nav navbar-right asdf-menu">
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                   aria-haspopup="true"
+                   aria-expanded="false">
+                  <i class="fa fa-bars"></i>
+                </a>
+                <ul class="dropdown-menu">
+                  <li><a v-on:click="openAssistant">Assist</a></li>
+                  <li role="separator" class="divider"></li>
+                  <li><a href="/logout">quit</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+
+         <div class="sidebar-section clearfix">
+            <div class="label label-default asdf-label">chats</div>
+            <ul class="nav nav-sidebar" id="room-list">
+              <li v-for="room in rooms">
+                <a v-on:click="roomClicked(room.fullname)" rel="{{ room.fullname }}" title="{{ room.target }}">{{ room.target }}</a>
+              </li>
+            </ul>
+          </div>
+
+        </div> <!-- /.sidebar -->
+        
+        <div class="col-md-9" id="msg-container">
+          <div id="msg-header" class="">
+            <i class="fa fa-bars visible-xs-inline"></i> {{ room.target }}
+            <a v-for="option in room.peer_start_menu" v-on:click="openSelect(0, option.value)" class="btn btc-link">{{ option.label }}</a>
+          </div>
+
+          <div id="msg-body" class="xfull-height">
+            <div id="msg-scroller" class="col-md-10 full-height">
+              <div v-if="hasOlderMsgs" class="text-center older-msgs"><a v-on:click="openOlderMsgs">Older messages</a></div>
+              <div v-for="sec in msgList.sections">
+                <div class="text-center"><span class="label label-default asdf-label">{{ sec.day }}</span></div>
+                <div v-for="msg in sec.msgs" class="clearfix">
+                  <div><a>{{ msg.user_name }}</a> <span style="color:gray">[{{ msg.minute }}]</span></div>
+                  <div>{{ msg.content }}</div>
+                  <div v-if="msg.msgType=='select'">
+                    <a class="btn btn-link" v-on:click="openSelect(msg.id, option.value)" v-for="option in msg.args.options">{{ option.label }}</a>
+                  </div>
+                  <div v-if="msg.msgType=='form'" class="col-md-6 clearfix">
+                    <form v-on:submit="openSubmit">
+                      <div class="form-group" v-for="field in msg.args.fields">
+                        <input class="form-control" type="{{ field.type}}" name="{{ field.name }}" placeholder="{{ field.label }}"></input>
+                      </div>
+                      <div class="form-group">
+                        <button class="form-control" type="submit">Submit</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div> <!-- /#msg-scroller -->
+
+            <div class="col-md-2 hidden-xs full-height" id="member-list">
+              <div class="sidebar-section">
+                <div class="label label-default asdf-label">members</div>
+                <ul class="nav nav-sidebar" id="room-list">
+                  <li v-for="user in members">
+                    <a href="javascript:void(0)" rel="{{ user.id }}" title="{{ user.name }}">
+                      {{ user.name }}<span v-show="user.is_admin">*</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div> <!-- /#member-list -->
+          </div>
+          
+
+          <div class="" xxclass="col-md-offset-2 col-sm-offset-3 col-md-8" id="msg-sender">
+            <div class="input-group col-md-12">
+              <div class="input-group-btn">
+                <button type="button" class="btn btn-default" data-toggle="popover" title="hell" data-content="nice" style="border-right: none;">+</button>
+              </div>
+              <input type="text" v-on:keyup="senderKeyUp" class="form-control" id="text"></input>
+            </div>
+          </div> <!-- /.msg-sender -->
+
+        </div> <!-- /#msg-container -->
+      </div> <!-- /.asdf-chat -->
+    </div><!-- /#content -->
+    
+    <script language="javascript" src="<%= static_path(@conn, "/js/app.js") %>"></script>
+    <script>
+      //<!--
+            $(function() {
+            require('web/static/js/chat').ready()
+            });
+      //-->
+    </script>
+  </body>
+</html>
+

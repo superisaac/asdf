@@ -1,0 +1,138 @@
+/* This file is for your main application css. */
+
+body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    font-size: 14px;
+    /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace
+}
+
+.full-height {
+    height: 100%;
+}
+/* Customize container */
+.container-origin {
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+@media (min-width:768px){
+    .container-origin{width:750px}
+}
+@media (min-width:992px){
+    .container-origin{width:970px}
+}
+@media (min-width:1200px){
+    .container-origin{width:1170px}
+}
+
+#asdf-chat {
+    min-height: 600px;
+    border-right: 1px solid #f0f0f0;
+}
+
+.sidebar {
+    height: 100%;
+    background-color: #427690;
+
+    padding: 0 10px 15px 10px;
+}
+.sidebar .nav-sidebar a {
+    color: white;
+}
+.sidebar .nav-sidebar a:hover {
+    color: #427690;
+}
+
+.asdf-head {
+    clear: both;
+    border-bottom: 1px solid #eee;
+}
+
+.asdf-brand{
+    padding: 16px;
+    /*font-size: 18px; */
+    /*color: salmon !important; */
+    color: #f5dd5d !important;
+}
+
+.asdf-menu {
+    margin-right: -10px;
+}
+.asdf-menu a {
+    color: white;
+}
+.asdf-menu a:hover {
+    color: #427690;
+}
+
+.nav-sidebar {
+}
+
+.nav-sidebar li>a {
+    padding: 2px 12px;
+    margin: 0;
+    text-overflow: "...";
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#msg-container {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+#msg-header {
+    padding: 15px 15px;
+    margin: 0 0px;
+    border-bottom: 1px solid #eee;
+    background-color: #fafafa;
+}
+
+#msg-sender {
+    height: 54px;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border-top: 1px solid #CCC;
+    margin: 0;
+    padding: 10px;
+}
+
+#msg-scroller {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    /*height: 300px; */
+    padding: 6px 15px;
+}
+
+.asdf-label {
+    padding: 2px 8px;
+    background: #9c9c9c;
+}
+
+.sidebar-section {
+    margin-top: 16px;
+}
+
+.sidebar-section .asdf-label {
+    margin: 20px 12px 10px 12px;
+}
+
+.sidebar-section ul {
+    margin-top: 0
+}
+
+#member-list {
+    background-color: #fbfbfb;
+
+    /*background-color: #79aec8; */
+    border-left: 1px solid #eee;
+    height: 100%;
+    padding: 10px 10px;
+}

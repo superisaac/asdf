@@ -1,0 +1,23 @@
+<ol class="breadcrumb">
+  <li><a href="/">Login</a></li>
+  <li class="active">Password login</li>
+</ol>
+
+<div class="jumbotron clearfix">
+  <h3>Login using user/password</h3>
+  <div class="col-md-6 col-md-offset-3 clearfix">
+    <%= form_tag("", method: :post) %>
+    <div class="form-group">
+      <input class="form-control" type="text" name="username" placeholder="Username"></input>
+    </div>
+
+    <div class="form-group">
+      <input class="form-control" type="password" name="passwd" placeholder="Password"></input>
+    </div>
+
+    <div class="form-group">
+      <input type="submit" class="btn btn-primary btn-block" value="Login"></input>
+    </div>
+</form>
+</div>
+</div>
