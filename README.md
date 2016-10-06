@@ -1,5 +1,7 @@
 # Asdf
 
+Asdfchat, a slack like channel system using phoenix & elixir 
+
 To start your Phoenix app:
 
   * Install dependencies with `mix deps.get`
