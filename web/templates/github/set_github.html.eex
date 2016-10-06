@@ -1,0 +1,18 @@
+<ol class="breadcrumb">
+  <li><a href="/">Login</a></li>
+  <li class="active">Github login</li>
+</ol>
+
+<div class="jumbotron clearfix">
+  <h3>Set your github clientid and secret</h3>
+  <div class="alert alert-warning text-left">
+    Register a github app and set clientid and secret in config<br/>
+    <code>
+use Mix.Config<br/>
+&nbsp;&nbsp;config :asdf, :github_auth,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;clientid: "11111111",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;secret: "22222222"<br/>
+    </code>
+  </div>
+</div>
+

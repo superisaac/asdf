@@ -7,18 +7,26 @@ defmodule Asdf.GithubController do
 
   def auth(conn, _params) do
     cfg = Application.get_env(:asdf, :github_auth)
+    
     client_id = cfg |> Keyword.get(:clientid)
-    #secret = cfg | Keyword.get(:secret)
-    auth_url = "https://github.com/login/oauth/authorize?client_id=#{client_id}&redirect_id=http://localhost:4000/auth/github/callback&state=thisistoken"
-    IO.puts auth_url
-    redirect conn, external: auth_url
+    secret = cfg |> Keyword.get(:secret)
+
+    host = get_req_header(conn, "host")|>List.first
+    
+    
+    
+    if (client_id != nil and client_id != ""
+        and secret != nil and secret != "") do
+      auth_url = "https://github.com/login/oauth/authorize?client_id=#{client_id}&redirect_id=#{conn.scheme}://#{host}/auth/github/callback&state=thisistoken"
+      redirect conn, external: auth_url
+    else
+      render conn, "set_github.html"
+    end
   end
 
   def auth_callback(conn, params) do
     #code = params |> Dict.get("code")
     code = params["code"]
-    IO.puts code
-
     cfg = Application.get_env(:asdf, :github_auth)
     client_id = cfg |> Keyword.get(:clientid)
     secret = cfg |> Keyword.get(:secret)

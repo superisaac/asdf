@@ -254,8 +254,9 @@ defmodule Asdf.Api.ChatController do
     curr_user = current_user(conn)
     options = params["options"]
     # TODO: validate options
-    user = curr_user
+    curr_user
     |> Asdf.User.put_args(%{"start_options" => options})
+    
     ok_json conn, %{}
   end
   

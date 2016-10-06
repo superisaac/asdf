@@ -137,14 +137,9 @@ defmodule Asdf.Util do
   end
 
   def merge_url(conn, url) do
-    portstr =
-    case conn.port do
-      nil -> ""
-      x when is_integer(x) -> ":#{x}"
-      _ -> ""
-    end
-    base = "#{conn.scheme}://#{conn.host}#{portstr}"
-    URI.merge(base, url)
+    host = Plug.Conn.get_req_header(conn, "host") |> List.first
+    base_url = "#{conn.scheme}://#{host}"
+    URI.merge(base_url, url)
     |> URI.to_string
   end
 
