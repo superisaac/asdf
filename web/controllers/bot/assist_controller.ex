@@ -8,15 +8,16 @@ defmodule Asdf.Bot.AssistController do
     content = body["content"]
     room_id = body["room_id"]
     sender_id = body["user_id"]
-    if sender_id != bot.id do
+    #if sender_id != bot.id do
+    if true do
       spawn(fn ->
         url = merge_url(conn, "/api/chat.postSelect")
         :timer.sleep(100)  # sleep 0.1 second
         User.post_json_api(bot, url, %{
               "target": "\##{room_id}",
-              "text": "echo "<> content,
+              "text": "What can I do?",
               "options": [
-                %{"label": "ChangeName", "value": "change_name"},
+                %{"label": "Change Name", "value": "change_name"},
                 %{"label": "ok", "value": "3"}
               ]})
       end)
@@ -66,12 +67,19 @@ defmodule Asdf.Bot.AssistController do
       old_user_name = User.get_user_name(user)
       cset = User.changeset(user, %{:name => new_user_name})
       user = Repo.update!(cset)
-       spawn(fn ->
+      
+      spawn(fn ->
+        topic = "user:#{user.id}"
+        Asdf.Endpoint.broadcast!(topic, "profile_changed", %{"user_id" => user.id})
+      end)
+      
+      spawn(fn ->
         url = merge_url(conn, "/api/chat.postMessage")
         User.post_json_api(bot, url, %{
               "target": "\##{room_id}",
               "text": "@#{user.name} change from #{old_user_name}"
-                           })
+                              })
+
       end)
     end
     ok_json conn, %{}

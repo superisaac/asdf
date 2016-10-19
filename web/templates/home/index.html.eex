@@ -61,15 +61,20 @@
 
           <div id="msg-body" class="xfull-height">
             <div id="msg-scroller" class="col-md-10 full-height">
+              
               <div v-if="hasOlderMsgs" class="text-center older-msgs"><a v-on:click="openOlderMsgs">Older messages</a></div>
               <div v-for="sec in msgList.sections">
                 <div class="text-center"><span class="label label-default asdf-label">{{ sec.day }}</span></div>
                 <div v-for="msg in sec.msgs" class="clearfix">
                   <div><a>{{ msg.user_name }}</a> <span style="color:gray">[{{ msg.minute }}]</span></div>
                   <div>{{ msg.content }}</div>
+                  
                   <div v-if="msg.msgType=='select'">
-                    <a class="btn btn-link" v-on:click="openSelect(msg.id, option.value)" v-for="option in msg.args.options">{{ option.label }}</a>
+                    <div class="list-group col-md-4">
+                      <a class="list-group-item" v-on:click="openSelect(msg.id, option.value)" v-for="option in msg.args.options">{{ option.label }}</a>
+                    </div>
                   </div>
+                  
                   <div v-if="msg.msgType=='form'" class="col-md-6 clearfix">
                     <form v-on:submit="openSubmit">
                       <div class="form-group" v-for="field in msg.args.fields">
@@ -80,6 +85,7 @@
                       </div>
                     </form>
                   </div>
+                  
                 </div>
               </div>
             </div> <!-- /#msg-scroller -->

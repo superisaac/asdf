@@ -231,7 +231,6 @@ export var chatVM = new Vue({
           .receive("error", resp => { console.log("Unable to join", resp) })
 
         this.channel.on('new_msg', (body) => {
-          console.info('new_msg', body)
           let msg = new Msg(body.message);
           let room = vm.getRoomFromList(msg.room_id)
           if(room) {
@@ -251,6 +250,11 @@ export var chatVM = new Vue({
             }
           } else {
             vm.getJoinedRooms(false)
+          }
+        })
+        this.channel.on('profile_changed', (data) => {
+          if(!vm.currentUser || vm.currentUser.id == data.user_id) {
+            vm.getProfile()
           }
         })
       }

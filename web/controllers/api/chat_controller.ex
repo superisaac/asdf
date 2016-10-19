@@ -98,7 +98,7 @@ defmodule Asdf.Api.ChatController do
     
     body = %{"body" => msg_json,
              "event" => "message"}
-    spawn(__MODULE__, :call_bots, [conn, room, body])
+    spawn(__MODULE__, :call_bots, [conn, room, body, msg.user_id])
     body
   end
 
@@ -125,7 +125,7 @@ defmodule Asdf.Api.ChatController do
     
         body = %{"body" => select_json,
                  "event" => "select"}
-        spawn(__MODULE__, :call_bots, [conn, room, body])
+        spawn(__MODULE__, :call_bots, [conn, room, body, curr_user.id])
 
         ok_json conn, body
     end
@@ -155,7 +155,7 @@ defmodule Asdf.Api.ChatController do
     
         body = %{"body" => form_json,
                  "event" => "form"}
-        spawn(__MODULE__, :call_bots, [conn, room, body])
+        spawn(__MODULE__, :call_bots, [conn, room, body, curr_user.id])
 
         ok_json conn, body
     end
@@ -172,7 +172,7 @@ defmodule Asdf.Api.ChatController do
     end)
   end
 
-  def call_bots(conn, room, msg_json) do
+  def call_bots(conn, room, msg_json, sender_id) do
     q = Repo.all(
       from member in RoomMember,
       join: user in Asdf.User,
@@ -181,7 +181,7 @@ defmodule Asdf.Api.ChatController do
       where: member.room_id == ^room.id)
 
     Enum.map(q, fn(user) ->
-      if Asdf.User.is_bot(user) and user.args["callback_url"] do
+      if Asdf.User.is_bot(user) and user.id != sender_id and user.args["callback_url"] do
         callback_url = 
         case user.args["callback_url"] do
           "/" <> str ->
