@@ -29,6 +29,10 @@ body {
     .container-origin{width:1170px}
 }
 
+.char-logo {
+    font-size: 40px;
+    color: salmon !important;
+}
 #asdf-chat {
     min-height: 600px;
     border-right: 1px solid #f0f0f0;

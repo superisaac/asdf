@@ -38,6 +38,80 @@ function leftPad(numStr, n, c) {
   return numStr
 }
 
+// simple text tokenizer
+export function Tokenizer(text) {
+  this.text = text
+}
+
+Tokenizer.prototype.nextToken = function() {
+  if(!this.text) return undefined
+  let r = /^<([@#])([^<>\n]+)>/.exec(this.text)
+  if(r) {
+    let symbol = r[1]
+    let arr = r[2].split('|')
+    this.text = this.text.substr(r[0].length)
+    if(symbol == '@') {
+      return {
+        'kind': 'user',
+        'id': parseInt(arr[0]),
+        'name': arr[1]
+      }
+    } else { //if(symbol == '#') {
+      return {
+        'kind': 'room',
+        'id': parseInt(arr[0]),
+        'name': arr[1]
+      }
+    }
+  }
+
+  r = /^([^<\n]+|<)/.exec(this.text)
+  if(r) {
+    let v = r[0]
+    this.text = this.text.substr(v.length)
+    return {
+      kind: 'text',
+      text: v
+    }
+  }
+  r = /^\n/.exec(this.text)
+  if(r) {
+    let v = r[0]
+    this.text = this.text.substr(v.length)
+    return {
+      kind: 'nl',
+      text: v
+    }
+  }
+
+  return null
+}
+
+Tokenizer.prototype.tokenList = function() {
+  let arr = []
+  let token = this.nextToken()
+  let lastToken = null
+  while(token) {
+    if(token.kind != 'text') {
+      if(lastToken) {
+        arr.push(lastToken)
+        lastToken = null
+      }
+      arr.push(token)
+    } else if(lastToken){
+      lastToken.text += token.text
+    } else {
+      lastToken = token
+    }
+    token = this.nextToken()
+  }
+  if(lastToken) {
+    arr.push(lastToken)
+    lastToken = null
+  }
+  return arr
+}
+
 // models
 function User(data) {
   this.id = data.id;
@@ -82,6 +156,22 @@ function Msg(data) {
   this.dayStr = (leftPad(this.created_at.getYear() + 1900, 4) +
                  '-' + leftPad(this.created_at.getMonth() + 1, 2) +
                  '-' + leftPad(this.created_at.getDate(), 2))
+  
+  let tokenizer = new Tokenizer(this.content)
+  this.html = tokenizer.tokenList().map((token) => {
+    switch(token.kind) {
+    case 'text':
+      //return escape(token.text)
+      return token.text
+    case 'room':
+      return '<a href="javascript:void(0)">#' + token.name + '</a>'
+    case 'user':
+      return '<a href="javascript:void(0)">@' + token.name + '</a>'
+    case 'nl':
+      return '<br/>'
+    }
+  }).join('')
+  console.info('html', this.html)
 }
 
 Msg.prototype.getUser = function() {

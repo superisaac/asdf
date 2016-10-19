@@ -5,23 +5,21 @@ defmodule Asdf.Bot.AssistController do
   
   def index(conn, %{"event" => "message", "body" => body}) do
     bot = conn.assigns[:bot_user]
-    content = body["content"]
+    #content = body["content"]
     room_id = body["room_id"]
-    sender_id = body["user_id"]
-    #if sender_id != bot.id do
-    if true do
-      spawn(fn ->
-        url = merge_url(conn, "/api/chat.postSelect")
-        :timer.sleep(100)  # sleep 0.1 second
-        User.post_json_api(bot, url, %{
-              "target": "\##{room_id}",
-              "text": "What can I do?",
-              "options": [
-                %{"label": "Change Name", "value": "change_name"},
-                %{"label": "ok", "value": "3"}
-              ]})
-      end)
-    end
+
+    spawn(fn ->
+      url = merge_url(conn, "/api/chat.postSelect")
+      :timer.sleep(100)  # sleep 0.1 second
+      User.post_json_api(bot, url, %{
+            "target": "\##{room_id}",
+            "text": "What can I do?",
+            "options": [
+              %{"label": "Change Name", "value": "change_name"},
+              %{"label": "ok", "value": "3"}
+            ]})
+    end)
+
     ok_json conn, %{}
   end
 

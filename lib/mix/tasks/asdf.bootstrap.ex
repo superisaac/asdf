@@ -16,8 +16,8 @@ defmodule Mix.Tasks.Asdf.Bootstrap do
         "assist",
         %{"callback_url" => "/bot/assist",
           "start_options"=> [
-             %{"label"=> "ChangeName", "value"=> "change_name"},
-             %{"label"=> "Bot", "value"=> "bot"}
+            %{"label"=> "Profile", "value"=> "profile_action"},
+            %{"label"=> "Room", "value"=> "room_action"}
            ]})
     end)
 

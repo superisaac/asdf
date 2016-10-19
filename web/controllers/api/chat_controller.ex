@@ -6,16 +6,12 @@ defmodule Asdf.Api.ChatController do
   alias Asdf.Room
   alias Asdf.RoomMember
   #alias Phoenix.Channel.Server
-
+  
   def add_select(conn, params) do
     curr_user = current_user(conn)
     options = params["options"]
     # TODO: validatate options
-    text =
-      case params["text"] do
-        nil -> ""
-        x -> x
-      end
+    text = params["text"]
 
     target = params["target"]
     room = Room.get_chat_room(target, curr_user)
@@ -23,6 +19,7 @@ defmodule Asdf.Api.ChatController do
       room == nil ->
         error_json conn, "invalid_target"
       true ->
+        text = Asdf.Msg.clean_text(text)
         msg = %Msg{:user_id => curr_user.id,
                    :room_id => room.id,
                    :content => text,
@@ -38,18 +35,14 @@ defmodule Asdf.Api.ChatController do
     curr_user = current_user(conn)
     fields = params["fields"]
     # TODO: validate fields
-    text =
-      case params["text"] do
-        nil -> ""
-        x -> x
-      end
-
+    text = params["text"]
     target = params["target"]
     room = Room.get_chat_room(target, curr_user)
     cond do
       room == nil ->
         error_json conn, "invalid_target"
       true ->
+        text = Asdf.Msg.clean_text(text)        
         msg = %Msg{:user_id => curr_user.id,
                    :room_id => room.id,
                    :content => text,
@@ -72,6 +65,7 @@ defmodule Asdf.Api.ChatController do
         !valid_text?(text) ->
           error_json conn, "invalid_or_empty_text"
         true ->
+          text = Asdf.Msg.clean_text(text)
           msg = %Msg{:user_id => curr_user.id,
                      :room_id => room.id,
                      :content => text}
@@ -256,7 +250,6 @@ defmodule Asdf.Api.ChatController do
     # TODO: validate options
     curr_user
     |> Asdf.User.put_args(%{"start_options" => options})
-    
     ok_json conn, %{}
   end
   

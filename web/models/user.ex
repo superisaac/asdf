@@ -55,6 +55,7 @@ defmodule Asdf.User do
     get_json(user, parent)
   end
 
+  def is_bot(nil), do: false
   def is_bot(user) when user != nil do
     user.parent_id != 0 and user.parent_id != nil
   end
@@ -112,7 +113,7 @@ defmodule Asdf.User do
   def get_bot_user(name, bot_name) do
     parent = Repo.get_by(Asdf.User,
                          name: name, is_active: true)
-    if parent do
+    if parent != nil do
       Repo.get_by(Asdf.User,
                   name: bot_name,
                   parent_id: parent.id,

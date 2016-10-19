@@ -16,10 +16,12 @@
       <header class="header">
         <nav role="navigation">
           <ul class="nav nav-pills pull-right">
-            <li><a href="http://www.phoenixframework.org/docs">Get Started</a></li>
+            <li><a href="https://github.com/superisaac/asdf" target="_blank">Github Page</a></li>
+            <!--<li><a href="http://www.phoenixframework.org/docs" target="_blank">Github page</a></li>-->
           </ul>
         </nav>
         <span class="logo"></span>
+        <!--<i class="fa fa-smile-o"></i> Asdf chat</span> -->
       </header>
 
       <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>

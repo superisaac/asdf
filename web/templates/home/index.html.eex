@@ -67,7 +67,7 @@
                 <div class="text-center"><span class="label label-default asdf-label">{{ sec.day }}</span></div>
                 <div v-for="msg in sec.msgs" class="clearfix">
                   <div><a>{{ msg.user_name }}</a> <span style="color:gray">[{{ msg.minute }}]</span></div>
-                  <div>{{ msg.content }}</div>
+                  <div>{{{ msg.html }}}</div>
                   
                   <div v-if="msg.msgType=='select'">
                     <div class="list-group col-md-4">

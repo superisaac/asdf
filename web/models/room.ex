@@ -155,7 +155,7 @@ defmodule Asdf.Room do
         {:user, user_name} ->
             Repo.get_by(Asdf.User, name: user_name, is_active: true)
             |> get_directmsg_room(current_user)
-          {:bot, user_name, bot_name} ->
+        {:bot, user_name, bot_name} ->
             Asdf.User.get_bot_user(user_name, bot_name)
             |> get_directmsg_room(current_user)
         _ -> nil
