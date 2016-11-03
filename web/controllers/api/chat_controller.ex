@@ -6,43 +6,74 @@ defmodule Asdf.Api.ChatController do
   alias Asdf.Room
   alias Asdf.RoomMember
   #alias Phoenix.Channel.Server
-  
-  def add_select(conn, params) do
-    curr_user = current_user(conn)
-    options = params["options"]
-    # TODO: validatate options
-    text = params["text"]
 
+  def add_gadget(conn, params) do
+    curr_user = current_user(conn)
+    template = params["template"] |> valid_ident
+    data = params["data"]
     target = params["target"]
+    text = params["text"] |> Asdf.Msg.clean_text
     room = Room.get_chat_room_if_joined(target, curr_user)
     cond do
       room == nil ->
         error_json conn, "invalid_target"
+      not is_map(data) ->
+        error_json conn, "invalid_data"
+      template == nil ->
+        error_json conn, "invalid_template"
       true ->
-        text = Asdf.Msg.clean_text(text)
-        msg = %Msg{:user_id => curr_user.id,
-                   :room_id => room.id,
-                   :content => text,
-                   :args => %{"msg_type": "select",
-                              "options": options}}
-        msg = msg |> Repo.insert!
+        msg = add_gadget_msg(conn, curr_user, room, template, text, data)
+        msg = msg |> Repo.insert!        
         body = msg_created(conn, msg, room)
         ok_json conn, body
     end
   end
-
-  defp clean_fields([]), do: []
-  defp clean_fields([h|t]) do
-    case clean_field(h) do
-      nil ->
-        clean_fields(t)
-      x ->
-        [x|clean_fields(t)]
+  
+  def add_gadget_msg(_conn, curr_user, room, "select", text, data) do
+    options = data["options"]
+    %Msg{:user_id => curr_user.id,
+         :room_id => room.id,
+         :content => text,
+         :args => %{
+           "msg_type": "gadget",
+           "template": "select",
+           "options": options}}
+  end
+  def add_gadget_msg(conn, curr_user, room, "form", text, data) do
+    action = data["action"] |> valid_ident
+    fields = data["fields"] |> clean_form_fields
+    cond do
+      fields == [] or fields == nil ->
+        error_json conn, "invalid_fields"
+      action == nil or action == "" ->
+        error_json conn, "invalid_action"
+      true ->
+        text = Asdf.Msg.clean_text(text)        
+        %Msg{:user_id => curr_user.id,
+             :room_id => room.id,
+             :content => text,
+             :args => %{"msg_type": "gadget",
+                        "template": "form",
+                        "action": action,
+                        "fields": fields}}
     end
   end
-  defp clean_fields(_), do: nil
+  def add_gadget_msg(conn, _curr_user, _room, _template, _text, _data) do
+    error_json conn, "template_not_supported"
+  end
+
+  defp clean_form_fields([]), do: []
+  defp clean_form_fields([h|t]) do
+    case clean_form_field(h) do
+      nil ->
+        clean_form_fields(t)
+      x ->
+        [x|clean_form_fields(t)]
+    end
+  end
+  defp clean_form_fields(_), do: nil
   
-  defp clean_field(field) when is_map(field) do
+  defp clean_form_field(field) when is_map(field) do
     type = field["type"]
     name = field["name"] |> valid_ident
     label = field["label"]
@@ -55,35 +86,7 @@ defmodule Asdf.Api.ChatController do
         %{"type" => type, "name" => name, "label" => label}
     end
   end
-  defp clean_field(_), do: nil
-
-  def add_form(conn, params) do
-    curr_user = current_user(conn)
-    action = params["action"] |> valid_ident
-    fields = params["fields"] |> clean_fields
-    text = params["text"]
-    target = params["target"]
-    room = Room.get_chat_room_if_joined(target, curr_user)
-    cond do
-      room == nil ->
-        error_json conn, "invalid_target"
-      fields == [] or fields == nil ->
-        error_json conn, "invalid_fields"
-      action == nil or action == "" ->
-        error_json conn, "invalid_action"
-      true ->
-        text = Asdf.Msg.clean_text(text)        
-        msg = %Msg{:user_id => curr_user.id,
-                   :room_id => room.id,
-                   :content => text,
-                   :args => %{"msg_type": "form",
-                              "action": action,
-                              "fields": fields}}
-        msg = msg |> Repo.insert!
-        body = msg_created(conn, msg, room)
-        ok_json conn, body
-    end
-  end
+  defp clean_form_field(_), do: nil
 
   def add_msg(conn, params) do
     curr_user = current_user(conn)

@@ -185,6 +185,14 @@ defmodule Asdf.Room do
     end
   end
 
+  def regular?(room) do
+    room.type == 0
+  end
+
+  def directmsg?(room) do
+    room.type == 1
+  end
+
   def get_directmsg_room(_user1, nil), do: nil
   def get_directmsg_room(nil, _user2), do: nil
   def get_directmsg_room(user1, user2) when user1 != nil and user2 != nil do
@@ -216,7 +224,10 @@ defmodule Asdf.Room do
         Asdf.RoomMember.upsert(room, user1)
         Asdf.RoomMember.upsert(room, user2)
         room
-      room -> room
+      room ->
+        Asdf.RoomMember.upsert(room, user1)
+        Asdf.RoomMember.upsert(room, user2)
+        room
     end
   end
 

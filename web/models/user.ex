@@ -155,7 +155,6 @@ defmodule Asdf.User do
 
     Poison.decode!(r.body)
   end
-
   
   
   def get_user(nil), do: nil
@@ -181,5 +180,13 @@ defmodule Asdf.User do
     cset = changeset(user, new_args)
     Asdf.Repo.update!(cset)
   end
-   
+
+  def post_gadget(src_conn, bot_user, target, template, data, text \\ "") do
+    url = Asdf.Util.merge_url(src_conn, "/api/chat.postGadget")
+    post_json_api(bot_user, url, %{
+          "target": target,
+          "template": template,
+          "data": data,
+          "text": text})
+  end
 end

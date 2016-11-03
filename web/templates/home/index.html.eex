@@ -69,13 +69,13 @@
                   <div><a>{{ msg.user_name }}</a> <span style="color:gray">[{{ msg.minute }}]</span></div>
                   <div>{{{ msg.html }}}</div>
                   
-                  <div v-if="msg.msgType=='select'">
+                  <div v-if="msg.msgType=='gadget' && msg.args.template == 'select'">
                     <div class="list-group col-md-4">
                       <a class="list-group-item" v-on:click="openSelect(msg.id, option.value)" v-for="option in msg.args.options">{{ option.label }}</a>
                     </div>
                   </div>
                   
-                  <div v-if="msg.msgType=='form'" class="col-md-6 clearfix">
+                  <div v-if="msg.msgType=='gadget' && msg.args.template == 'form'" class="col-md-6 clearfix">
                     <form v-on:submit="openSubmit">
                       <input type="hidden" name="target" value="">
                       <input type="hidden" name="action" value="{{ msg.args.action }}">

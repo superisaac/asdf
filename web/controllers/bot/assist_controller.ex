@@ -8,18 +8,13 @@ defmodule Asdf.Bot.AssistController do
     #content = body["content"]
     room_id = body["room_id"]
 
-    spawn(fn ->
-      url = merge_url(conn, "/api/chat.postSelect")
-      :timer.sleep(100)  # sleep 0.1 second
-      User.post_json_api(bot, url, %{
-            "target": "\##{room_id}",
-            "text": "What can I do?",
-            "options": [
-              %{"label": "Change Name", "value": "change_name"},
-              %{"label": "ok", "value": "3"}
-            ]})
-    end)
-
+    User.post_gadget(conn, bot,
+                     "\##{room_id}", "select",
+                     %{
+                       "options": [
+                         %{"label": "Change Name", "value": "change_name"},
+                         %{"label": "ok", "value": "3"}
+                       ]})
     ok_json conn, %{}
   end
 
@@ -41,18 +36,18 @@ defmodule Asdf.Bot.AssistController do
   def menu_selected(conn, "change_name", body) do
     bot = conn.assigns[:bot_user]
     room_id = body["room_id"]
-    user_name = body["user_name"]
-    url = merge_url(conn, "/api/chat.postForm")
     fields = [%{
                  "label" => "New user name",
                  "name" => "user_name",
                  "type" => "text"
           }]
-    User.post_json_api(bot, url, %{
-          "target": "\##{room_id}",
-          "action": "change_name",
-          "fields": fields})
+    User.post_gadget(conn, bot,
+                     "\##{room_id}", "form",
+                     %{
+                       "action": "change_name",
+                       "fields": fields})                
   end
+  
   def menu_selected(_conn, _value, _body), do: nil
 
   def form_submited(conn, "change_name", body) do
