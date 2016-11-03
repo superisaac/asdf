@@ -74,6 +74,7 @@ Tokenizer.prototype.nextToken = function() {
       text: v
     }
   }
+
   r = /^\n/.exec(this.text)
   if(r) {
     let v = r[0]
@@ -241,6 +242,7 @@ export var chatVM = new Vue({
     rooms: [],
     msgList: new MsgList(),
     hasOlderMsgs: false,
+    roomJoined: true,
     room: new Room({name: "", user_name: ""}),
     members: [],
     channel: null
@@ -288,18 +290,21 @@ export var chatVM = new Vue({
       e.stopPropagation()
       e.preventDefault()
       
-      let formData = {}
+      /*let formData = {target:'#' + this.room.id}
       $(':input', form).each(function() {
         let name = $(this).attr('name')
         if(name) {
           formData[name] = $(this).val()
         }
-      })
-        let params = {
+      })*/
+
+      $(':input[name=target]', form).val('#' + this.room.id)
+      let formData = form.serialize()
+      /*  let params = {
           target: '#' + this.room.id,
           form_data: JSON.stringify(formData)
-        }
-      Api.postJSON('/api/chat.postFormSubmit', params, (data) => {
+        } */
+      Api.postJSON('/api/chat.postFormSubmit', formData, (data) => {
         if(data.ok) {
           console.info('post event', params, data)
         } else {
@@ -439,10 +444,12 @@ export var chatVM = new Vue({
       }
         //let params = {room: '#' + room.id}
       vm.hasOlderMsgs = false
+
       Api.getJSON(
         '/api/chat.history',
         params, (data) => {
           if(data.ok) {
+            vm.roomJoined = true
             let room = new Room(data.room)
             vm.room = room
             var msgList = new MsgList();
@@ -454,6 +461,9 @@ export var chatVM = new Vue({
             room.unreadCount = 0
             vm.setHasOlderMsgs()
             this.getRoomMembers(room)
+          } else if(data.error == 'room_not_joined') {
+            vm.roomJoined = false
+            vm.msgList = new MsgList()
           } else {
             console.error(data.error)
           }

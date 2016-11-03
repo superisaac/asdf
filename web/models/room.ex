@@ -164,6 +164,18 @@ defmodule Asdf.Room do
     r
   end
 
+  def get_chat_room_if_joined(target, current_user) do
+    case get_chat_room(target, current_user) do
+      nil -> nil
+      room ->
+        if Asdf.RoomMember.exists(room, current_user) do
+          room
+        else
+          nil
+        end
+    end
+  end
+
   def get_type_display(room) do
     case room.type do
       0 ->

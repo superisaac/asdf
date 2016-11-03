@@ -24,41 +24,42 @@ defmodule Asdf.Bot.AssistController do
   end
 
   def index(conn, %{"event" => "select", "body" => body}) do
-    bot = conn.assigns[:bot_user]
     value = body["value"]
-    room_id = body["room_id"]
-    user_name = body["user_name"]
-    spawn(fn ->
-
-      case value do
-        "change_name" ->
-          url = merge_url(conn, "/api/chat.postForm")
-          fields = [%{
-                       "label" => "New user name",
-                       "name" => "user_name",
-                       "type" => "text"
-                    }]
-
-          User.post_json_api(bot, url, %{
-                "target": "\##{room_id}",
-                "text": "@#{user_name} you choosed #{value}",
-                "fields": fields
-                             })
-         _ -> 
-          url = merge_url(conn, "/api/chat.postMessage")        
-          User.post_json_api(bot, url, %{
-                "target": "\##{room_id}",
-                "text": "@#{user_name} you choosed #{value}"
-                             })
-      end
-    end)
+    spawn(__MODULE__, :menu_selected, [conn, value, body])
     ok_json conn, %{}
   end
 
   def index(conn, %{"event" => "form", "body" => body}) do
+    action = body["action"]
+    IO.puts "got form submit"
+    IO.inspect body
+    form_submited(conn, action, body)
+    ok_json conn, %{}
+  end
+
+
+  def menu_selected(conn, "change_name", body) do
+    bot = conn.assigns[:bot_user]
+    room_id = body["room_id"]
+    user_name = body["user_name"]
+    url = merge_url(conn, "/api/chat.postForm")
+    fields = [%{
+                 "label" => "New user name",
+                 "name" => "user_name",
+                 "type" => "text"
+          }]
+    User.post_json_api(bot, url, %{
+          "target": "\##{room_id}",
+          "action": "change_name",
+          "fields": fields})
+  end
+  def menu_selected(_conn, _value, _body), do: nil
+
+  def form_submited(conn, "change_name", body) do
     bot = conn.assigns[:bot_user]
     room_id = body["room_id"]
     user_id = body["user_id"]
+    action = body["action"]
     new_user_name = body["form_data"]["user_name"]
     user = Repo.get(User, user_id)
     if user != nil do
@@ -70,17 +71,8 @@ defmodule Asdf.Bot.AssistController do
         topic = "user:#{user.id}"
         Asdf.Endpoint.broadcast!(topic, "profile_changed", %{"user_id" => user.id})
       end)
-      
-      spawn(fn ->
-        url = merge_url(conn, "/api/chat.postMessage")
-        User.post_json_api(bot, url, %{
-              "target": "\##{room_id}",
-              "text": "@#{user.name} change from #{old_user_name}"
-                              })
-
-      end)
     end
-    ok_json conn, %{}
   end
+  def form_submited(_conn, _action, _body), do: nil
 
 end

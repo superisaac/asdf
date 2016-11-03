@@ -39,9 +39,15 @@ defmodule Asdf.RoomMember do
   end
 
   def upsert(room, user) do
-    if !Asdf.Repo.get_by(Asdf.RoomMember, user_id: user.id, room_id: room.id) do
+    #if !Asdf.Repo.get_by(Asdf.RoomMember, user_id: user.id, room_id: room.id) do
+    if exists(room, user) do
       create(room, user, false)
     end
+  end
+
+  def exists(room, user) do
+    IO.puts "exist #{room.id} #{user.id}"
+    Asdf.Repo.get_by(Asdf.RoomMember, user_id: user.id, room_id: room.id) != nil
   end
 
 end

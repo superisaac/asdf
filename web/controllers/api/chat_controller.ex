@@ -14,7 +14,7 @@ defmodule Asdf.Api.ChatController do
     text = params["text"]
 
     target = params["target"]
-    room = Room.get_chat_room(target, curr_user)
+    room = Room.get_chat_room_if_joined(target, curr_user)
     cond do
       room == nil ->
         error_json conn, "invalid_target"
@@ -31,22 +31,53 @@ defmodule Asdf.Api.ChatController do
     end
   end
 
+  defp clean_fields([]), do: []
+  defp clean_fields([h|t]) do
+    case clean_field(h) do
+      nil ->
+        clean_fields(t)
+      x ->
+        [x|clean_fields(t)]
+    end
+  end
+  defp clean_fields(_), do: nil
+  
+  defp clean_field(field) when is_map(field) do
+    type = field["type"]
+    name = field["name"] |> valid_ident
+    label = field["label"]
+    cond do
+      type != "text" and type != "number" ->
+        nil
+      name == nil or name == "" or name == "action" or name == "target" ->
+        nil
+      true ->
+        %{"type" => type, "name" => name, "label" => label}
+    end
+  end
+  defp clean_field(_), do: nil
+
   def add_form(conn, params) do
     curr_user = current_user(conn)
-    fields = params["fields"]
-    # TODO: validate fields
+    action = params["action"] |> valid_ident
+    fields = params["fields"] |> clean_fields
     text = params["text"]
     target = params["target"]
-    room = Room.get_chat_room(target, curr_user)
+    room = Room.get_chat_room_if_joined(target, curr_user)
     cond do
       room == nil ->
         error_json conn, "invalid_target"
+      fields == [] or fields == nil ->
+        error_json conn, "invalid_fields"
+      action == nil or action == "" ->
+        error_json conn, "invalid_action"
       true ->
         text = Asdf.Msg.clean_text(text)        
         msg = %Msg{:user_id => curr_user.id,
                    :room_id => room.id,
                    :content => text,
                    :args => %{"msg_type": "form",
+                              "action": action,
                               "fields": fields}}
         msg = msg |> Repo.insert!
         body = msg_created(conn, msg, room)
@@ -55,24 +86,24 @@ defmodule Asdf.Api.ChatController do
   end
 
   def add_msg(conn, params) do
-      curr_user = current_user(conn)
-      text = params["text"]
-      target = params["target"]
-      room = Room.get_chat_room(target, curr_user)
-      cond do
-        room == nil ->
-          error_json conn, "invalid_target"
-        !valid_text?(text) ->
-          error_json conn, "invalid_or_empty_text"
-        true ->
-          text = Asdf.Msg.clean_text(text)
-          msg = %Msg{:user_id => curr_user.id,
-                     :room_id => room.id,
-                     :content => text}
-          msg = msg |> Repo.insert!
-          body = msg_created(conn, msg, room)
-          ok_json conn, body
-      end
+    curr_user = current_user(conn)
+    text = params["text"]
+    target = params["target"]
+    room = Room.get_chat_room_if_joined(target, curr_user)
+    cond do
+      room == nil ->
+        error_json conn, "invalid_target"
+      !valid_text?(text) ->
+        error_json conn, "invalid_or_empty_text"
+      true ->
+        text = Asdf.Msg.clean_text(text)
+        msg = %Msg{:user_id => curr_user.id,
+                   :room_id => room.id,
+                   :content => text}
+        msg = msg |> Repo.insert!
+        body = msg_created(conn, msg, room)
+        ok_json conn, body
+    end
   end
 
   def msg_created(conn, msg, room) do
@@ -88,11 +119,13 @@ defmodule Asdf.Api.ChatController do
     end)
     msg_json = Msg.get_json(msg, room, nil)
     body = %{"message" => msg_json}
-    spawn(__MODULE__, :broadcast, [room, "new_msg", body])
+    spawn(__MODULE__, :broadcast,
+          [room, "new_msg", body])
     
     body = %{"body" => msg_json,
              "event" => "message"}
-    spawn(__MODULE__, :call_bots, [conn, room, body, msg.user_id])
+    spawn(__MODULE__, :call_bots,
+          [conn, room, body, msg.user_id])
     body
   end
 
@@ -102,21 +135,21 @@ defmodule Asdf.Api.ChatController do
     reply_msg_id = params["reply"]
 
     target = params["target"]
-    room = Room.get_chat_room(target, curr_user)
+    room = Room.get_chat_room_if_joined(target, curr_user)
     cond do
       room == nil ->
         error_json conn, "invalid_target"
       true ->
         select_json = %{
-        "room_id" => room.id,
-        "user_id" => curr_user.id,
-        "user_name" => Asdf.User.get_user_name(curr_user),
-        "reply" => reply_msg_id,
-        "value" => value}
+          "room_id" => room.id,
+          "user_id" => curr_user.id,
+          "user_name" => Asdf.User.get_user_name(curr_user),
+          "reply" => reply_msg_id,
+          "value" => value}
 
         body = %{"select" => select_json}
         spawn(__MODULE__, :broadcast, [room, "select", body])
-    
+        
         body = %{"body" => select_json,
                  "event" => "select"}
         spawn(__MODULE__, :call_bots, [conn, room, body, curr_user.id])
@@ -127,26 +160,28 @@ defmodule Asdf.Api.ChatController do
 
   def add_form_submit(conn, params) do
     curr_user = current_user(conn)
-    form_data = params["form_data"]
-    form_data = Poison.decode!(form_data)
+    
     reply_msg_id = params["reply"]
-
     target = params["target"]
-    room = Room.get_chat_room(target, curr_user)
+    action = params["action"]
+    form_data = params |> Map.delete("target") |> Map.delete("reply") |> Map.delete("action")
+    
+    room = Room.get_chat_room_if_joined(target, curr_user)
     cond do
       room == nil ->
-        error_json conn, "invalid_target"
+        error_json conn, "invpalid_target"
       true ->
         form_json = %{
-        "room_id" => room.id,
-        "user_id" => curr_user.id,
-        "user_name" => Asdf.User.get_user_name(curr_user),
-        "reply" => reply_msg_id,
-        "form_data" => form_data}
+          "room_id" => room.id,
+          "user_id" => curr_user.id,
+          "user_name" => Asdf.User.get_user_name(curr_user),
+          "reply" => reply_msg_id,
+          "action" => action,
+          "form_data" => form_data}
 
         body = %{"form" => form_json}
         spawn(__MODULE__, :broadcast, [room, "form", body])
-    
+        
         body = %{"body" => form_json,
                  "event" => "form"}
         spawn(__MODULE__, :call_bots, [conn, room, body, curr_user.id])
@@ -177,16 +212,16 @@ defmodule Asdf.Api.ChatController do
     Enum.map(q, fn(user) ->
       if Asdf.User.is_bot(user) and user.id != sender_id and user.args["callback_url"] do
         callback_url = 
-        case user.args["callback_url"] do
-          "/" <> str ->
-            merge_url(conn, "/" <> str)
-          x -> x
-        end
+          case user.args["callback_url"] do
+            "/" <> str ->
+              merge_url(conn, "/" <> str)
+            x -> x
+          end
 
         nonce = generate_nonce()
         cred = Repo.one!(from c in Asdf.Cred,
-                        where: c.user_id == ^user.id,
-                        where: c.name == "default")
+                         where: c.user_id == ^user.id,
+                         where: c.name == "default")
         sig = make_signature(nonce, "#{user.id}", cred.secret)
         headers = [
           "Content-Type": "application/json;charset=utf-8",
@@ -217,6 +252,14 @@ defmodule Asdf.Api.ChatController do
   def get_msg_list(conn, params) do
     curr_user = current_user(conn)
     room = Room.get_chat_room(params["room"], curr_user)
+    if !RoomMember.exists(room, curr_user) do
+      error_json conn, "room_not_joined"
+    else
+      get_msg_list_if_joined(conn, room, curr_user, params)
+    end
+  end
+  
+  defp get_msg_list_if_joined(conn, room, curr_user, params) do
     max_msg_id = parse_uint(params["max_id"])
     count = parse_uint(params["count"], 20)
     qs =
@@ -234,7 +277,7 @@ defmodule Asdf.Api.ChatController do
           limit: ^count
       end          
     q = Repo.all(qs)
-
+    
     msgs = Enum.map(q, fn(m) ->
       Msg.get_json(m, room, nil)
     end)

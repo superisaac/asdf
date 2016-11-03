@@ -61,7 +61,7 @@
 
           <div id="msg-body" class="xfull-height">
             <div id="msg-scroller" class="col-md-10 full-height">
-              
+              <div v-if="!roomJoined" class="text-center">Room not joined</div>
               <div v-if="hasOlderMsgs" class="text-center older-msgs"><a v-on:click="openOlderMsgs">Older messages</a></div>
               <div v-for="sec in msgList.sections">
                 <div class="text-center"><span class="label label-default asdf-label">{{ sec.day }}</span></div>
@@ -77,8 +77,12 @@
                   
                   <div v-if="msg.msgType=='form'" class="col-md-6 clearfix">
                     <form v-on:submit="openSubmit">
+                      <input type="hidden" name="target" value="">
+                      <input type="hidden" name="action" value="{{ msg.args.action }}">
                       <div class="form-group" v-for="field in msg.args.fields">
-                        <input class="form-control" type="{{ field.type}}" name="{{ field.name }}" placeholder="{{ field.label }}"></input>
+                        <input class="form-control" type="{{ field.type}}"
+                               name="{{ field.name }}"
+                               placeholder="{{ field.label }}"></input>
                       </div>
                       <div class="form-group">
                         <button class="form-control" type="submit">Submit</button>

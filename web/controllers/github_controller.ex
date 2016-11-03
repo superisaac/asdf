@@ -25,14 +25,14 @@ defmodule Asdf.GithubController do
   end
 
   def auth_callback(conn, params) do
-    #code = params |> Dict.get("code")
     code = params["code"]
     cfg = Application.get_env(:asdf, :github_auth)
     client_id = cfg |> Keyword.get(:clientid)
     secret = cfg |> Keyword.get(:secret)
     body = "client_id=#{client_id}&client_secret=#{secret}&code=#{code}"
-    #body = %{"client_id" => client_id, "client_secret" => secret, "code" => code}
-    r = HTTPoison.post!("https://github.com/login/oauth/access_token", body, ["Content-Type": "application/x-www-form-urlencoded"])
+    r = HTTPoison.post!("https://github.com/login/oauth/access_token",
+                        body,
+                        ["Content-Type": "application/x-www-form-urlencoded"])
 
     q = URI.decode_query(r.body)
     token = q["access_token"]
