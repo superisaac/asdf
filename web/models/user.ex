@@ -189,4 +189,11 @@ defmodule Asdf.User do
           "data": data,
           "text": text})
   end
+
+  def post_text_msg(src_conn, bot_user, target, text) do
+    url = Asdf.Util.merge_url(src_conn, "/api/chat.postMessage")
+    post_api(bot_user, url, %{
+          "target": target,
+          "text": text})
+  end
 end

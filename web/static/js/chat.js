@@ -339,7 +339,12 @@ export var chatVM = new Vue({
         this.channel.on('profile_changed', (data) => {
           if(!vm.currentUser || vm.currentUser.id == data.user_id) {
             vm.getProfile()
+            vm.getJoinedRooms(false)
           }
+        })
+        this.channel.on('data_changed', () => {
+          vm.getProfile()
+          vm.getJoinedRooms(false)
         })
       }
     },

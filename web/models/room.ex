@@ -36,7 +36,11 @@ defmodule Asdf.Room do
 
   def get_full_name(room) do
     room_user = user(room)
-    "#{room_user.name}/#{room.name}"
+    get_full_name(room, room_user)
+  end
+
+  def get_full_name(room, room_user) do
+    "#{room_user.name}/#{room.name}"    
   end
   
   def create(user, name) do
@@ -229,6 +233,16 @@ defmodule Asdf.Room do
         Asdf.RoomMember.upsert(room, user2)
         room
     end
+  end
+
+  def delete_room(room) do
+    Repo.transaction(fn ->
+      Repo.delete_all(
+        from lm in Asdf.RoomMember,
+        where: lm.room_id == ^room.id
+      )
+      Repo.delete(room)
+    end)
   end
 
 end

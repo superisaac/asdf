@@ -51,7 +51,7 @@ defmodule Asdf.Api.RoomController do
   end
 
   def kick_user(room, user) do
-    [cnt, _] = Repo.delete_all(RoomMember, user_id: user.id, room_id: room.id)
+    {cnt, _} = Repo.delete_all(RoomMember, user_id: user.id, room_id: room.id)
     cnt
   end    
 
@@ -76,7 +76,7 @@ defmodule Asdf.Api.RoomController do
       room.user_id == curr_user.id ->
         error_json conn, "leave_self_room"
       true ->
-        [cnt, _] = Repo.delete_all(
+        {cnt, _} = Repo.delete_all(
           from lm in RoomMember,
           where: lm.user_id == ^curr_user.id,
           where: lm.room_id == ^room.id
@@ -133,6 +133,7 @@ defmodule Asdf.Api.RoomController do
     count = 20
     q = Repo.all(from room in Room,
                  where: room.user_id == ^curr_user.id,
+                 where: room.type == 0,
                  order_by: [desc: room.last_msg_id],
                  limit: ^count)
     items = q |> Enum.map(fn(room) ->
