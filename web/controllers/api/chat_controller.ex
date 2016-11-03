@@ -5,11 +5,19 @@ defmodule Asdf.Api.ChatController do
   alias Asdf.Repo
   alias Asdf.Room
   alias Asdf.RoomMember
-  #alias Phoenix.Channel.Server
 
+  def valid_template?(template) do
+    case template |> valid_ident do
+      nil -> false
+      "select" -> true
+      "form" -> true
+      _ -> false
+    end
+  end
+  
   def add_gadget(conn, params) do
     curr_user = current_user(conn)
-    template = params["template"] |> valid_ident
+    template = params["template"]
     data = params["data"]
     target = params["target"]
     text = params["text"] |> Asdf.Msg.clean_text
@@ -19,9 +27,10 @@ defmodule Asdf.Api.ChatController do
         error_json conn, "invalid_target"
       not is_map(data) ->
         error_json conn, "invalid_data"
-      template == nil ->
+     !valid_template?(template) ->
         error_json conn, "invalid_template"
       true ->
+        template = template |> String.downcase
         msg = add_gadget_msg(conn, curr_user, room, template, text, data)
         msg = msg |> Repo.insert!        
         body = msg_created(conn, msg, room)
@@ -48,7 +57,8 @@ defmodule Asdf.Api.ChatController do
       action == nil or action == "" ->
         error_json conn, "invalid_action"
       true ->
-        text = Asdf.Msg.clean_text(text)        
+        text = Asdf.Msg.clean_text(text)
+        action = action |> String.downcase
         %Msg{:user_id => curr_user.id,
              :room_id => room.id,
              :content => text,
@@ -62,6 +72,7 @@ defmodule Asdf.Api.ChatController do
     error_json conn, "template_not_supported"
   end
 
+  # clean form fields
   defp clean_form_fields([]), do: []
   defp clean_form_fields([h|t]) do
     case clean_form_field(h) do
@@ -80,7 +91,7 @@ defmodule Asdf.Api.ChatController do
     cond do
       type != "text" and type != "number" ->
         nil
-      name == nil or name == "" or name == "action" or name == "target" ->
+      name == nil or name == "" or name == "action" or name == "target" or name == "reply" ->
         nil
       true ->
         %{"type" => type, "name" => name, "label" => label}
@@ -132,62 +143,37 @@ defmodule Asdf.Api.ChatController do
     body
   end
 
-  def add_select_value(conn, params) do
+  def add_gadget_action(conn, params) do
     curr_user = current_user(conn)
-    value = params["value"]
+    template = params["template"] |> valid_ident 
+    action = params["action"] |> valid_ident
     reply_msg_id = params["reply"]
-
     target = params["target"]
     room = Room.get_chat_room_if_joined(target, curr_user)
+    
+    form_data = params
+    |> Map.delete("action") |> Map.delete("template")
+    |> Map.delete("reply") |> Map.delete("target")
+
     cond do
       room == nil ->
         error_json conn, "invalid_target"
+      !valid_template?(template) ->
+        error_json conn, "invalid_template"
+      action == nil or action == "" ->
+        error_json conn, "invalid_action"
       true ->
-        select_json = %{
+        body = %{
           "room_id" => room.id,
           "user_id" => curr_user.id,
           "user_name" => Asdf.User.get_user_name(curr_user),
           "reply" => reply_msg_id,
-          "value" => value}
-
-        body = %{"select" => select_json}
-        spawn(__MODULE__, :broadcast, [room, "select", body])
-        
-        body = %{"body" => select_json,
-                 "event" => "select"}
-        spawn(__MODULE__, :call_bots, [conn, room, body, curr_user.id])
-
-        ok_json conn, body
-    end
-  end
-
-  def add_form_submit(conn, params) do
-    curr_user = current_user(conn)
-    
-    reply_msg_id = params["reply"]
-    target = params["target"]
-    action = params["action"]
-    form_data = params |> Map.delete("target") |> Map.delete("reply") |> Map.delete("action")
-    
-    room = Room.get_chat_room_if_joined(target, curr_user)
-    cond do
-      room == nil ->
-        error_json conn, "invpalid_target"
-      true ->
-        form_json = %{
-          "room_id" => room.id,
-          "user_id" => curr_user.id,
-          "user_name" => Asdf.User.get_user_name(curr_user),
-          "reply" => reply_msg_id,
+          "template" => template,
           "action" => action,
-          "form_data" => form_data}
-
-        body = %{"form" => form_json}
-        spawn(__MODULE__, :broadcast, [room, "form", body])
-        
-        body = %{"body" => form_json,
-                 "event" => "form"}
-        spawn(__MODULE__, :call_bots, [conn, room, body, curr_user.id])
+          "data" => form_data}
+        msg_body = %{"body" => body,
+                     "event" => "gadget_action"}
+        spawn(__MODULE__, :call_bots, [conn, room, msg_body, curr_user.id])
 
         ok_json conn, body
     end

@@ -273,10 +273,11 @@ export var chatVM = new Vue({
     openSelect: function(reply_id, val) {
       let params = {
         target: "#" + this.room.id,
-        value: val,
         reply: reply_id,
+        template: 'select',
+        action: val
       }
-      Api.postJSON('/api/chat.postSelectValue', params, (data) => {
+      Api.postJSON('/api/chat.postGadgetAction', params, (data) => {
         if(data.ok) {
           console.info('post event', params, data)
         } else {
@@ -289,22 +290,10 @@ export var chatVM = new Vue({
       let form = $(e.target)
       e.stopPropagation()
       e.preventDefault()
-      
-      /*let formData = {target:'#' + this.room.id}
-      $(':input', form).each(function() {
-        let name = $(this).attr('name')
-        if(name) {
-          formData[name] = $(this).val()
-        }
-      })*/
 
       $(':input[name=target]', form).val('#' + this.room.id)
       let formData = form.serialize()
-      /*  let params = {
-          target: '#' + this.room.id,
-          form_data: JSON.stringify(formData)
-        } */
-      Api.postJSON('/api/chat.postFormSubmit', formData, (data) => {
+      Api.postJSON('/api/chat.postGadgetAction', formData, (data) => {
         if(data.ok) {
           console.info('post event', params, data)
         } else {

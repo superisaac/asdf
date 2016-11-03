@@ -78,6 +78,8 @@
                   <div v-if="msg.msgType=='gadget' && msg.args.template == 'form'" class="col-md-6 clearfix">
                     <form v-on:submit="openSubmit">
                       <input type="hidden" name="target" value="">
+                      <input type="hidden" name="template" value="form">
+                      <input type="hidden" name="reply" value="{{ msg.id }}">
                       <input type="hidden" name="action" value="{{ msg.args.action }}">
                       <div class="form-group" v-for="field in msg.args.fields">
                         <input class="form-control" type="{{ field.type}}"

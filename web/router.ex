@@ -67,15 +67,9 @@ defmodule Asdf.Router do
     post "/chat.postStartMenu", Api.ChatController, :put_start_menu
     post "/chat.postMessage", Api.ChatController, :add_msg
     
-    #post "/chat.postSelect", Api.ChatController, :add_select
-    post "/chat.postSelectValue", Api.ChatController, :add_select_value
-    #post "/chat.postForm", Api.ChatController, :add_form
-    post "/chat.postGadget", Api.ChatController, :add_gadget    
-    post "/chat.postFormSubmit", Api.ChatController, :add_form_submit
+    post "/chat.postGadget", Api.ChatController, :add_gadget
+    post "/chat.postGadgetAction", Api.ChatController, :add_gadget_action
     get  "/chat.history", Api.ChatController, :get_msg_list
-
-   
-
   end
 
   scope "/bot", Asdf do
