@@ -39,12 +39,10 @@ defmodule Asdf.Msg do
     user = user!(msg)
     get_json(msg, room, user)
   end
-  
   def get_json(msg, nil, user) do
     room = room!(msg)
     get_json(msg, room, user)
   end
-
   def get_json(msg, room, user) do
     %{id: msg.id,
       user_id: user.id,
@@ -55,11 +53,39 @@ defmodule Asdf.Msg do
       created_at: msg.inserted_at,
       args: msg.args}
   end
+  def get_json(msg), do: get_json(msg, nil, nil)
 
-  def get_json(msg) do
-    get_json(msg, nil, nil)
-  end
 
+  def get_rich_json(conn, msg, room, user) do
+    mj = get_json(msg, room, user)
+    msg_type =
+    if mj.args == nil do
+      "text"
+    else
+      mj.args["msg_type"]
+    end
+    
+    cond do
+      msg_type == "file" ->
+        cfg = Application.get_env(:asdf, :files)
+        upload_url = cfg |> Keyword.get(:upload_url)
+        upload_url = conn |> Asdf.Util.merge_url(upload_url)
+        absurl = URI.merge(upload_url, mj.args["path"]) |> URI.to_string
+        args = mj.args |> Map.put("url", absurl)
+        mj |> Map.put(:args, args)      
+      msg_type == "image" ->
+        cfg = Application.get_env(:asdf, :files)
+        upload_url = cfg |> Keyword.get(:upload_url)
+        upload_url = conn |> Asdf.Util.merge_url(upload_url)
+        absurl = URI.merge(upload_url, mj.args["path"]) |> URI.to_string
+        abs_thumb_url = URI.merge(upload_url, mj.args["thumb_path"]) |> URI.to_string      
+        args = mj.args |> Map.put("url", absurl) |> Map.put("thumb_url", abs_thumb_url)
+        IO.inspect args
+        mj |> Map.put(:args, args)
+      true -> mj
+    end
+  end  
+  
   def get_entity(ent) do
     case Asdf.Util.parse_entity(ent) do
       {:room, user_name, room_name} ->
@@ -104,5 +130,6 @@ defmodule Asdf.Msg do
     text = Regex.replace(~r{>}, text, "&gt;")    
     Regex.replace(reg_entity, text, fn x -> replace_entity(x) end)
   end
+
   
 end

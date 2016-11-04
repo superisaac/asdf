@@ -41,6 +41,7 @@ defmodule Asdf.Mixfile do
      {:basic_auth, ">= 0.0.1"},
      {:httpoison, "~> 0.9.0"},
      {:uuid, "~> 1.1"},
+     {:mogrify, "~> 0.5.0"}
     ]
   end
 

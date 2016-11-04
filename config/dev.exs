@@ -50,8 +50,13 @@ config :asdf, Asdf.Repo,
 #   pool_size: 10
 
 config :asdf, :github_auth,
-  clientid: "",
-  secret: ""
+clientid: "",
+secret: ""
+
+config :asdf, :files,
+upload_dir: Path.absname("upload"),
+upload_url: "/upload/"
+
 
 import_config "dev.secret.exs"
  

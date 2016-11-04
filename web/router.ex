@@ -7,6 +7,7 @@ defmodule Asdf.Router do
     plug :fetch_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+
   end
 
   pipeline :admin do
@@ -69,6 +70,8 @@ defmodule Asdf.Router do
     
     post "/chat.postGadget", Api.ChatController, :add_gadget
     post "/chat.postGadgetAction", Api.ChatController, :add_gadget_action
+    post "/chat.upload", Api.ChatController, :upload_file
+
     get  "/chat.history", Api.ChatController, :get_msg_list
   end
 

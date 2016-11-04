@@ -11,6 +11,8 @@ defmodule Asdf.Endpoint do
     at: "/", from: :asdf, gzip: false,
     only: ~w(css fonts images js fonts favicon.ico robots.txt)
 
+  plug Plug.Static, at: "/upload", from: Application.get_env(:asdf, :files)|>Keyword.get(:upload_dir)
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do

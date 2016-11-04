@@ -4,7 +4,7 @@ import $ from 'jquery'
 import socket from './socket'
 
 export var Api = {
-  getJSON: function(path, args, callback) {
+  get: function(path, args, callback) {
     if(typeof args == 'function') {
       callback = args
       args = {}
@@ -12,7 +12,7 @@ export var Api = {
     args['stoken'] = window.apiToken
     return $.getJSON(path, args, callback)
   },
-  postJSON: function(path, args, callback) {
+  post: function(path, args, callback) {
     if(typeof args == 'function') {
       callback = args;
       args = {}
@@ -23,6 +23,26 @@ export var Api = {
       path += '?stoken=' + window.apiToken
     }
     return $.post(path, args, callback)
+  },
+  upload: function(path, formData, callback) {
+    if(typeof args == 'function') {
+      callback = args;
+      formData
+    }
+    if(/\?/.test(path)) {
+      path += '&stoken=' + window.apiToken
+    } else {
+      path += '?stoken=' + window.apiToken
+    }
+    return $.ajax({
+      url: path,
+      data: formData,
+      cache: false,
+      contentType: false,
+      processData: false,
+      type: 'POST',
+      success: callback
+    })
   }
 }
 
@@ -172,7 +192,6 @@ function Msg(data) {
       return '<br/>'
     }
   }).join('')
-  console.info('html', this.html)
 }
 
 Msg.prototype.getUser = function() {
@@ -259,7 +278,7 @@ export var chatVM = new Vue({
     getProfile: function() {
       // Get current user
       let vm = this
-      Api.getJSON('/api/profile', (data) => {
+      Api.get('/api/profile', (data) => {
         if(data.ok) {
           vm.currentUser = new User(data.user);
           vm.listenUserChannel()
@@ -277,13 +296,37 @@ export var chatVM = new Vue({
         template: 'select',
         action: val
       }
-      Api.postJSON('/api/chat.postGadgetAction', params, (data) => {
+      Api.post('/api/chat.postGadgetAction', params, (data) => {
         if(data.ok) {
           console.info('post event', params, data)
         } else {
           console.error(data.error)
         }
       })
+    },
+
+    uploadFile: function(e) {
+      e.stopPropagation()
+      e.preventDefault()
+      let form = $(e.target)
+
+      let formData = new FormData()
+      formData.append('target', '#' + this.room.id)
+      formData.append('text', $('textarea[name=text]', form).val() || '')
+
+      $('input[type=file]', form).each(function() {
+        let f = $(this)[0].files[0]
+        formData.append($(this).attr('name'), f)
+      });
+      Api.upload('/api/chat.upload', formData, (data) => {
+        if(data.ok) {
+          console.info('post upload', data)
+        } else {
+          console.error(data.error)
+        }
+      })
+      e.target.reset()    
+      $('.modal').hide()
     },
 
     openSubmit: function(e) {
@@ -293,7 +336,7 @@ export var chatVM = new Vue({
 
       $(':input[name=target]', form).val('#' + this.room.id)
       let formData = form.serialize()
-      Api.postJSON('/api/chat.postGadgetAction', formData, (data) => {
+      Api.post('/api/chat.postGadgetAction', formData, (data) => {
         if(data.ok) {
           console.info('post event', params, data)
         } else {
@@ -315,6 +358,7 @@ export var chatVM = new Vue({
           .receive("error", resp => { console.log("Unable to join", resp) })
 
         this.channel.on('new_msg', (body) => {
+          console.info('new_msg', body.message.args)
           let msg = new Msg(body.message);
           let room = vm.getRoomFromList(msg.room_id)
           if(room) {
@@ -375,7 +419,7 @@ export var chatVM = new Vue({
       let vm = this
       openFirst = openFirst || false
       // Get room list
-      Api.getJSON('/api/room.joined', (data) => {
+      Api.get('/api/room.joined', (data) => {
         if(data.ok) {
           vm.rooms = data.rooms.map((roomData) => {
             return new Room(roomData)
@@ -397,7 +441,7 @@ export var chatVM = new Vue({
       if (firstMsg) {
         params.max_id = firstMsg.id
       }
-      Api.getJSON(
+      Api.get(
         '/api/chat.history',
         params, (data) => {
           if(data.ok) {
@@ -417,7 +461,7 @@ export var chatVM = new Vue({
     
     getRoomMembers: function(room) {
       let vm = this
-      Api.getJSON('/api/room.members',
+      Api.get('/api/room.members',
                   {room: '#' + room.id},
                   (data) => {
                     console.info('members', data)
@@ -439,7 +483,7 @@ export var chatVM = new Vue({
         //let params = {room: '#' + room.id}
       vm.hasOlderMsgs = false
 
-      Api.getJSON(
+      Api.get(
         '/api/chat.history',
         params, (data) => {
           if(data.ok) {
@@ -493,7 +537,7 @@ export var chatVM = new Vue({
         if(!/^#/.test(roomName)) {
           roomName = '#' + roomName
         }
-        Api.postJSON('/api/room.join',
+        Api.post('/api/room.join',
                      {room: roomName},
                      (data) => {
                        if(data.ok) {
@@ -506,14 +550,14 @@ export var chatVM = new Vue({
         let arr = r[3].split(' ')
         let userName = arr[0]
         let rest = arr.slice(1).join(' ')
-        Api.postJSON('/api/chat.postMessage',
+        Api.post('/api/chat.postMessage',
                      {target: '@' + userName,
                       text: rest},
                      (data) => {
                        console.info('post direct msg', data);
                      })
       } else {
-        Api.postJSON('/api/chat.postMessage',
+        Api.post('/api/chat.postMessage',
                      {target: vm.room.target,
                       text: text},
                      (data) => {

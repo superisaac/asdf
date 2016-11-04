@@ -1,6 +1,7 @@
 defmodule Asdf.Api.ChatController do
   use Asdf.Web, :controller
   import Ecto.Query
+  import Mogrify
   alias Asdf.Msg
   alias Asdf.Repo
   alias Asdf.Room
@@ -131,7 +132,7 @@ defmodule Asdf.Api.ChatController do
       cset = Room.changeset(room, params)
       Repo.update!(cset)
     end)
-    msg_json = Msg.get_json(msg, room, nil)
+    msg_json = Msg.get_rich_json(conn, msg, room, nil)
     body = %{"message" => msg_json}
     spawn(__MODULE__, :broadcast,
           [room, "new_msg", body])
@@ -268,7 +269,7 @@ defmodule Asdf.Api.ChatController do
     q = Repo.all(qs)
     
     msgs = Enum.map(q, fn(m) ->
-      Msg.get_json(m, room, nil)
+      Msg.get_rich_json(conn, m, room, nil)
     end)
 
     room_json = Room.get_json_via_user(room, curr_user)
@@ -283,6 +284,67 @@ defmodule Asdf.Api.ChatController do
     curr_user
     |> Asdf.User.put_args(%{"start_options" => options})
     ok_json conn, %{}
+  end
+
+  def upload_file(conn, params) do
+    curr_user = current_user(conn)
+    target = params["target"]
+    text = params["text"] |> Asdf.Msg.clean_text
+    room = Room.get_chat_room_if_joined(target, curr_user)
+    upload = params["file"]
+    cond do
+      room == nil ->
+        error_json conn, "invalid_target"
+      upload == nil ->
+        error_json conn, "no_upload_file"
+      true ->
+        cfg = Application.get_env(:asdf, :files)
+        upload_to_dir = cfg |> Keyword.get(:upload_dir)
+        
+        extension = Path.extname(upload.filename)
+        rand = UUID.uuid4()
+        dest_file = "#{rand}#{extension}"
+        abs_dest_file = Path.join([upload_to_dir, dest_file])
+        File.cp(upload.path, abs_dest_file)
+
+        args =
+        if is_image?(extension) do
+          thumb_path = "thumb_#{rand}.png"
+          abs_thumb_path = Path.join([upload_to_dir, thumb_path])
+          thumb_image = open(abs_dest_file) |> resize("200x200") |> save
+          File.cp(thumb_image.path, abs_thumb_path)
+          %{
+            "msg_type": "image",
+            "path": dest_file,
+            "ext": extension,
+            "thumb_path": thumb_path
+          }
+        else
+          %{
+            "msg_type": "file",
+            "path": dest_file,
+            "ext": extension
+          }          
+        end
+        
+        msg = %Msg{:user_id => curr_user.id,
+                   :room_id => room.id,
+                   :content => text,
+                   :args => args}
+        msg = msg |> Repo.insert!        
+        body = msg_created(conn, msg, room)
+        ok_json conn, body
+    end
+  end
+
+  def is_image?(ext) do
+    case  ext |> String.downcase do
+      ".jpg" -> true
+      ".jpeg" -> true
+      ".gif" -> true
+      ".png" -> true
+        _ -> false
+    end
   end
   
 end
