@@ -25,10 +25,6 @@ export var Api = {
     return $.post(path, args, callback)
   },
   upload: function(path, formData, callback) {
-    if(typeof args == 'function') {
-      callback = args;
-      formData
-    }
     if(/\?/.test(path)) {
       path += '&stoken=' + window.apiToken
     } else {
@@ -324,9 +320,11 @@ export var chatVM = new Vue({
         } else {
           console.error(data.error)
         }
+        setTimeout(()=> {
+          $('.modal').modal('hide')
+        }, 100)
       })
-      e.target.reset()    
-      $('.modal').hide()
+      e.target.reset()
     },
 
     openSubmit: function(e) {

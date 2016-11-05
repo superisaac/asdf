@@ -72,10 +72,11 @@
                   <div v-if="msg.msgType=='file'">
                     <a href="{{ msg.args.url }}" target="_asdffile">{{ msg.args.path }}</a>
                   </div>
-                  <div v-if="msg.msgType=='image'" class="col-md-3">
+                  <div v-if="msg.msgType=='image'" class="col-md-4">
                     <a href="{{ msg.args.url }}" target="_asdffile" class="thumbnail">
-                      <img src="{{ msg.args.thumb_url }}" alt=""></img>
+                      <img v-bind:src="msg.args.thumb_url" alt=""></img>
                     </a>
+                    
                   </div>
                   <div v-if="msg.msgType=='gadget' && msg.args.template == 'select'">
                     <div class="list-group col-md-4">
@@ -159,6 +160,8 @@
     </div><!-- /#content -->
     
     <script language="javascript" src="<%= static_path(@conn, "/js/app.js") %>"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
     <script>
       //<!--
             $(function() {
